@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gouth-example
+spec:
+  template:
+    spec:
+      containers:
+      - name: gouth-example
+        image: mechiru/gouth-example:v0.1.0
+        env:
+          - name: PROJECT
+            value: "your-project-id"
+      restartPolicy: OnFailure

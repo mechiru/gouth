@@ -1,0 +1,21 @@
+[package]
+name = "examples"
+version = "0.1.0"
+authors = ["mechiru <u9053u6d41@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "pubsub"
+path = "src/pubsub/main.rs"
+
+[build-dependencies]
+tonic-build = { version = "0.2.0", default-features = false, features = ["transport", "prost"] }
+
+[dependencies]
+gouth = { path = "./../gouth" }
+tonic = { version = "0.2", features = ["tls"] }
+prost = { version = "0.6" }
+prost-types = { version = "0.6" }
+tokio = { version = "0.2", features = ["rt-threaded", "time", "stream", "fs", "macros", "uds"] }
