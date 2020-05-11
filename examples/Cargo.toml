@@ -10,11 +10,9 @@ edition = "2018"
 name = "pubsub"
 path = "src/pubsub/main.rs"
 
-[build-dependencies]
-tonic-build = { version = "0.2.0", default-features = false, features = ["transport", "prost"] }
-
 [dependencies]
 gouth = { path = "./../gouth" }
+googapis = { version = "0.1", features = ["google-pubsub-v1"] }
 tonic = { version = "0.2", features = ["tls"] }
 prost = { version = "0.6" }
 prost-types = { version = "0.6" }

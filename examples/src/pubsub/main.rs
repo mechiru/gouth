@@ -1,12 +1,7 @@
-pub mod google {
-    pub mod pubsub {
-        pub mod v1 {
-            tonic::include_proto!("google.pubsub.v1");
-        }
-    }
-}
-
-use google::pubsub::v1::{publisher_client::PublisherClient, ListTopicsRequest};
+use googapis::{
+    google::pubsub::v1::{publisher_client::PublisherClient, ListTopicsRequest},
+    CERTIFICATES,
+};
 
 use tonic::{
     metadata::MetadataValue,
@@ -15,12 +10,6 @@ use tonic::{
 };
 
 use gouth::Token;
-
-const ENDPOINT: &str = "https://pubsub.googleapis.com";
-
-// Read the file downloaded from https://pki.goog/roots.pem.
-// See https://cloud.google.com/blog/products/gcp/google-cloud-services-are-switching-certificate-authority.
-const CERTIFICATES: &[u8] = include_bytes!("./../../data/roots.pem");
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .ca_certificate(Certificate::from_pem(CERTIFICATES))
         .domain_name("pubsub.googleapis.com");
 
-    let channel = Channel::from_static(ENDPOINT)
+    let channel = Channel::from_static("https://pubsub.googleapis.com")
         .tls_config(tls_config)
         .connect()
         .await?;
