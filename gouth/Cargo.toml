@@ -1,13 +1,14 @@
 [package]
 name = "gouth"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["mechiru <u9053u6d41@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "This library provides auto-renewed tokens for GCP service authentication."
 repository = "https://github.com/mechiru/gouth"
 documentation = "https://docs.rs/gouth"
-keywords = ["gcloud", "gcp", "auth"]
+categories = ["authentication"]
+keywords = ["google", "cloud", "auth", "gcloud", "gcp"]
 readme = "./../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
