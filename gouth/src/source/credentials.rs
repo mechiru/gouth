@@ -45,7 +45,7 @@ impl Source for Credentials {
         use Credentials::*;
         match self {
             ServiceAccount(sa) => jwt::token(&sa),
-            User(_) => panic!("not support authorized user credential file"),
+            User(user) => oauth2::token(&user),
         }
     }
 }
@@ -95,8 +95,7 @@ pub fn from_json(buf: &[u8], scopes: &[String]) -> crate::Result<Credentials> {
     use Credentials::*;
     match creds {
         ServiceAccount(ref mut sa) => sa.scopes = scopes.to_owned(),
-        // User(ref mut u) => u.scopes = scopes.to_owned(),
-        User(_) => panic!("not support authorized user credential file"),
+        User(ref mut u) => u.scopes = scopes.to_owned(),
     }
     Ok(creds)
 }
@@ -106,13 +105,18 @@ pub fn from_file(path: impl AsRef<Path>, scopes: &[String]) -> crate::Result<Cre
     from_json(&buf, scopes)
 }
 
+#[inline]
+fn httpc_post(url: &str) -> attohttpc::RequestBuilder {
+    attohttpc::post(url).header_append(attohttpc::header::USER_AGENT, USER_AGENT)
+}
+
 mod jwt {
     use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
     use std::{convert::TryFrom, time::SystemTime};
 
     use crate::source::{
-        credentials::{ServiceAccount, USER_AGENT},
+        credentials::{httpc_post, ServiceAccount},
         Token, TokenResponse,
     };
 
@@ -161,11 +165,55 @@ mod jwt {
         let key = EncodingKey::from_rsa_pem(sa.private_key.as_bytes())?;
         let assertion = &encode(&header, &claims, &key)?;
 
-        let mut req = attohttpc::post(&sa.token_uri)
-            .header_append(attohttpc::header::USER_AGENT, USER_AGENT)
+        let mut req = httpc_post(&sa.token_uri)
             .form(&Payload {
                 grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
                 assertion,
+            })?
+            .prepare();
+        let resp = req.send()?;
+        if resp.is_success() {
+            let resp = TokenResponse::try_from(resp.text()?.as_ref())?;
+            Token::try_from(resp)
+        } else {
+            Err(crate::ErrorKind::HttpStatus(resp.status()).into())
+        }
+    }
+}
+
+mod oauth2 {
+    use std::convert::TryFrom;
+
+    use crate::source::{
+        credentials::{httpc_post, User},
+        Token, TokenResponse,
+    };
+
+    #[derive(serde::Serialize)]
+    struct Payload<'a> {
+        client_id: &'a str,
+        client_secret: &'a str,
+        grant_type: &'a str,
+        refresh_token: &'a str,
+    }
+
+    // https://github.com/golang/oauth2/blob/bf48bf16ab8d622ce64ec6ce98d2c98f916b6303/google/google.go#L21-L26
+    const TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
+    const GRANT_TYPE: &str = "refresh_token";
+
+    pub fn token(user: &User) -> crate::Result<Token> {
+        fetch_token(TOKEN_URL, user)
+    }
+
+    pub(super) fn fetch_token(url: &str, user: &User) -> crate::Result<Token> {
+        let mut req = httpc_post(url)
+            .form(&Payload {
+                client_id: &user.client_id,
+                client_secret: &user.client_secret,
+                grant_type: GRANT_TYPE,
+                // The reflesh token is not included in the response from google's server,
+                // so it always uses the specified refresh token from the file.
+                refresh_token: &user.refresh_token,
             })?
             .prepare();
         let resp = req.send()?;
@@ -233,7 +281,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "not support")]
     fn test_from_json_user() {
         let user = from_json(USER, &[]).unwrap();
         assert_eq!(
