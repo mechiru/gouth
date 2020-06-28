@@ -36,8 +36,6 @@ pub struct User {
     client_secret: String,
     client_id: String,
     refresh_token: String,
-    #[serde(skip)]
-    scopes: Vec<String>,
 }
 
 impl Source for Credentials {
@@ -95,7 +93,7 @@ pub fn from_json(buf: &[u8], scopes: &[String]) -> crate::Result<Credentials> {
     use Credentials::*;
     match creds {
         ServiceAccount(ref mut sa) => sa.scopes = scopes.to_owned(),
-        User(ref mut u) => u.scopes = scopes.to_owned(),
+        _ => {}
     }
     Ok(creds)
 }
@@ -228,9 +226,14 @@ mod oauth2 {
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use lazy_static::lazy_static;
+    use rouille::{router, Response};
+    use url::form_urlencoded::parse;
+
+    use std::{fs, io::Read};
 
     use super::*;
+    use crate::source::TokenResponse;
 
     const SERVICE_ACCOUNT: &[u8] = br#"{
 "type": "service_account",
@@ -289,7 +292,6 @@ mod test {
                 client_secret: "secret-xxx".into(),
                 client_id: "xxx.apps.googleusercontent.com".into(),
                 refresh_token: "refresh-xxx".into(),
-                scopes: Vec::new(),
             })
         );
     }
@@ -300,5 +302,53 @@ mod test {
         tmp.push("creds.json");
         fs::write(tmp.clone(), SERVICE_ACCOUNT).unwrap();
         assert!(from_file(tmp, &[]).is_ok());
+    }
+
+    lazy_static! {
+        static ref PORT: u16 = {
+            let server = rouille::Server::new("localhost:0", |req| {
+                assert_eq!(req.header("User-Agent").unwrap(), USER_AGENT);
+                router!(req,
+                        (POST) ["/oauth2/token"] => {
+                            assert_eq!(req.header("User-Agent").unwrap(), USER_AGENT);
+                            assert_eq!(req.header("Content-Type").unwrap(), "application/x-www-form-urlencoded");
+                            let mut buf = Vec::new();
+                            req.data().unwrap().read_to_end(&mut buf).unwrap();
+                            for (k, v) in parse(&buf) {
+                                match k.as_ref() {
+                                    "client_secret" => assert_eq!(v, "123"),
+                                    "client_id" => assert_eq!(v, "qwert"),
+                                    "refresh_token" => assert_eq!(v, "xyz"),
+                                    "grant_type" => assert_eq!(v, "refresh_token"),
+                                    _ => unreachable!(),
+                                }
+                            }
+                            Response::json(&TokenResponse{
+                                token_type: "Bearer".into(),
+                                access_token: "abc".into(),
+                                expires_in: 3599,
+                            })
+                        },
+                        _ => Response::empty_404()
+                )
+            })
+                .unwrap();
+            let port = server.server_addr().port();
+            std::thread::spawn(|| server.run());
+            port
+        };
+    }
+
+    #[test]
+    fn test_oauth2_fetch_token() {
+        let token =
+            oauth2::fetch_token(&format!("http://localhost:{}/oauth2/token", *PORT), &User {
+                client_secret: "123".into(),
+                client_id: "qwert".into(),
+                refresh_token: "xyz".into(),
+            })
+            .unwrap();
+        assert_eq!(token.token, "abc");
+        assert_eq!(token.type_, "Bearer");
     }
 }
