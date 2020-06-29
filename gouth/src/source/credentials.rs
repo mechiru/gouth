@@ -90,10 +90,8 @@ fn well_known_file_path() -> Option<PathBuf> {
 
 pub fn from_json(buf: &[u8], scopes: &[String]) -> crate::Result<Credentials> {
     let mut creds = serde_json::from_slice(buf).map_err(crate::ErrorKind::CredentialsJson)?;
-    use Credentials::*;
-    match creds {
-        ServiceAccount(ref mut sa) => sa.scopes = scopes.to_owned(),
-        _ => {}
+    if let Credentials::ServiceAccount(ref mut sa) = creds {
+        sa.scopes = scopes.to_owned()
     }
     Ok(creds)
 }
@@ -341,13 +339,15 @@ mod test {
 
     #[test]
     fn test_oauth2_fetch_token() {
-        let token =
-            oauth2::fetch_token(&format!("http://localhost:{}/oauth2/token", *PORT), &User {
+        let token = oauth2::fetch_token(
+            &format!("http://localhost:{}/oauth2/token", *PORT),
+            &User {
                 client_secret: "123".into(),
                 client_id: "qwert".into(),
                 refresh_token: "xyz".into(),
-            })
-            .unwrap();
+            },
+        )
+        .unwrap();
         assert_eq!(token.token, "abc");
         assert_eq!(token.type_, "Bearer");
     }
