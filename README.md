@@ -9,7 +9,7 @@ This library provides auto-renewed tokens for GCP service authentication.
 ## Notes
 | Authentication flow                  | Status                            |
 |--------------------------------------|-----------------------------------|
-| API key                              | Not support / No plans to support |
+| API key                              | Not supported / No plans to support |
 | OAuth 2.0 client                     | Supported                         |
 | Environment-provided service account | Supported                         |
 | Service account key                  | Supported                         |
