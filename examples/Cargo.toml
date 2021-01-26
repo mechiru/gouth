@@ -12,8 +12,8 @@ path = "src/pubsub/main.rs"
 
 [dependencies]
 gouth = { path = "./../gouth" }
-googapis = { version = "0.1", features = ["google-pubsub-v1"] }
-tonic = { version = "0.2", features = ["tls"] }
-prost = { version = "0.6" }
-prost-types = { version = "0.6" }
-tokio = { version = "0.2", features = ["rt-threaded", "time", "stream", "fs", "macros", "uds"] }
+googapis = { version = "0.3", features = ["google-pubsub-v1"] }
+tonic = { version = "0.4", features = ["tls"] }
+prost = "0.7"
+prost-types = "0.7"
+tokio = { version = "1.1", features = ["rt-multi-thread", "time", "fs", "macros"] }

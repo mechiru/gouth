@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .domain_name("pubsub.googleapis.com");
 
     let channel = Channel::from_static("https://pubsub.googleapis.com")
-        .tls_config(tls_config)
+        .tls_config(tls_config)?
         .connect()
         .await?;
 
@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }))
             .await?;
 
-        tokio::time::delay_for(std::time::Duration::from_secs(5)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
 
         println!(
             "duration={:?}, RESPONSE={:?}",
