@@ -3,6 +3,3 @@ members = [
   "gouth",
   "examples",
 ]
-
-[patch.crates-io]
-googapis = { git = "https://github.com/NathanHowell/googapis", branch = "tokio-1.0" }

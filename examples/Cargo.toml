@@ -4,16 +4,14 @@ version = "0.1.0"
 authors = ["mechiru <u9053u6d41@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [[bin]]
 name = "pubsub"
 path = "src/pubsub/main.rs"
 
 [dependencies]
 gouth = { path = "./../gouth" }
-googapis = { version = "0.3", features = ["google-pubsub-v1"] }
+googapis = { version = "0.4", features = ["google-pubsub-v1"] }
 tonic = { version = "0.4", features = ["tls"] }
-prost = "0.7"
-prost-types = "0.7"
+prost = { version = "0.7" }
+prost-types = { version = "0.7" }
 tokio = { version = "1.1", features = ["rt-multi-thread", "time", "fs", "macros"] }
