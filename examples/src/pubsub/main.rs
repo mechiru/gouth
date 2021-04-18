@@ -2,19 +2,15 @@ use googapis::{
     google::pubsub::v1::{publisher_client::PublisherClient, ListTopicsRequest},
     CERTIFICATES,
 };
-
+use gouth::tonic::interceptor;
 use tonic::{
-    metadata::MetadataValue,
     transport::{Certificate, Channel, ClientTlsConfig},
     Request,
 };
 
-use gouth::Token;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let project = std::env::var("PROJECT")?;
-    let token = Token::new()?;
 
     let tls_config = ClientTlsConfig::new()
         .ca_certificate(Certificate::from_pem(CERTIFICATES))
@@ -25,12 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect()
         .await?;
 
-    let mut service = PublisherClient::with_interceptor(channel, move |mut req: Request<()>| {
-        let token = &*token.header_value().unwrap();
-        let meta = MetadataValue::from_str(token).unwrap();
-        req.metadata_mut().insert("authorization", meta);
-        Ok(req)
-    });
+    let mut service = PublisherClient::with_interceptor(channel, interceptor());
 
     for i in 0..u64::MAX {
         let response = service

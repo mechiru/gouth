@@ -9,7 +9,7 @@ name = "pubsub"
 path = "src/pubsub/main.rs"
 
 [dependencies]
-gouth = { path = "./../gouth" }
+gouth = { path = "./../gouth", features = ["tonic-intercept"] }
 googapis = { version = "0.4", features = ["google-pubsub-v1"] }
 tonic = { version = "0.4", features = ["tls"] }
 prost = { version = "0.7" }
