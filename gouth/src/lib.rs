@@ -12,5 +12,8 @@ mod error;
 mod source;
 mod token;
 
+#[cfg(feature = "tonic-intercept")]
+pub mod tonic;
+
 pub use error::{Error, ErrorKind, Result};
 pub use token::{Builder, Token};
