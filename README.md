@@ -24,10 +24,15 @@ This library provides auto-renewed tokens for GCP service authentication.
   - On Google Compute Engine, it fetches credentials from the metadata server.
 
 ```rust
-use gouth::Token;
-
-let token = Token::new().unwrap();
+// simple:
+// gouth = { version = "x.x.x" }
+let token = gouth::Token::new().unwrap();
 println!("authorization: {}", token.header_value().unwrap());
+
+// with tonic:
+// gouth = { path = "x.x.x", features = ["tonic-intercept"] }
+let mut service = PublisherClient::with_interceptor(channel, gouth::tonic::interceptor());
+service.list_topics(...);
 ```
 
 ### Custom
