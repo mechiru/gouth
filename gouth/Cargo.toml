@@ -22,7 +22,7 @@ tonic = { version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
 lazy_static = "1.4"
-rouille = "3.0"
+rouille = "3.1"
 
 [features]
 default = []
